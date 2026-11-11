@@ -1,0 +1,96 @@
+/* ====================================================================
+   Authentication Pages (Login & Register)
+   ==================================================================== */
+
+.auth-wrapper {
+    min-height: calc(100vh - 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 50px 20px;
+}
+
+.auth-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 42px 40px;
+    box-shadow: var(--card-shadow-hover);
+    width: 100%;
+    max-width: 480px;
+}
+
+.auth-card.wide {
+    max-width: 600px;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.auth-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--color-olive);
+    margin-bottom: 12px;
+}
+
+.auth-logo span {
+    color: var(--color-terracotta);
+}
+
+.auth-title {
+    font-size: 24px;
+    color: var(--color-olive);
+    margin-bottom: 6px;
+}
+
+.auth-subtitle {
+    color: var(--color-charcoal-muted);
+    font-size: 14px;
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 14px;
+    color: var(--color-charcoal-muted);
+}
+
+.demo-credentials-box {
+    margin-top: 24px;
+    padding: 16px;
+    background: var(--bg-cream);
+    border: 1px dashed var(--color-sage);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+}
+
+.demo-credentials-box h6 {
+    color: var(--color-olive);
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.demo-tag {
+    cursor: pointer;
+    background: var(--color-white);
+    border: 1px solid var(--border-color);
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-right: 6px;
+    display: inline-block;
+    margin-bottom: 4px;
+    font-family: monospace;
+}
+

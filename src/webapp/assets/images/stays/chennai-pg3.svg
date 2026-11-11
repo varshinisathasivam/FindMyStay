@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <defs>
+    <linearGradient id="grad-chennai-pg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#283C32"/>
+      <stop offset="100%" stop-color="#292D2A"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#grad-chennai-pg3)"/>
+  <!-- Architectural grid -->
+  <g opacity="0.1" stroke="#FFFFFF" stroke-width="1">
+    <line x1="0" y1="100" x2="600" y2="100"/>
+    <line x1="0" y1="200" x2="600" y2="200"/>
+    <line x1="0" y1="300" x2="600" y2="300"/>
+    <line x1="150" y1="0" x2="150" y2="400"/>
+    <line x1="300" y1="0" x2="300" y2="400"/>
+    <line x1="450" y1="0" x2="450" y2="400"/>
+  </g>
+  <!-- Modern Building Illustration -->
+  <rect x="180" y="80" width="240" height="320" rx="12" fill="#F8F5EF" opacity="0.95"/>
+  <rect x="220" y="50" width="160" height="30" rx="4" fill="#C8795B"/>
+  <!-- Windows -->
+  <rect x="210" y="110" width="40" height="40" rx="6" fill="#283C32"/>
+  <rect x="280" y="110" width="40" height="40" rx="6" fill="#283C32"/>
+  <rect x="350" y="110" width="40" height="40" rx="6" fill="#283C32"/>
+  <rect x="210" y="180" width="40" height="40" rx="6" fill="#283C32"/>
+  <rect x="280" y="180" width="40" height="40" rx="6" fill="#283C32"/>
+  <rect x="350" y="180" width="40" height="40" rx="6" fill="#283C32"/>
+  <rect x="210" y="250" width="40" height="40" rx="6" fill="#283C32"/>
+  <rect x="280" y="250" width="40" height="40" rx="6" fill="#283C32"/>
+  <rect x="350" y="250" width="40" height="40" rx="6" fill="#283C32"/>
+  <!-- Entrance -->
+  <rect x="265" y="320" width="70" height="80" rx="8" fill="#C8795B"/>
+  <!-- Title Badge Overlay -->
+  <rect x="30" y="310" width="540" height="66" rx="10" fill="#292D2A" opacity="0.85"/>
+  <text x="50" y="340" font-family="'Plus Jakarta Sans', sans-serif" font-size="20" font-weight="bold" fill="#F8F5EF">Urban Nest Studio Rooms</text>
+  <text x="50" y="362" font-family="Inter, sans-serif" font-size="14" fill="#C8795B">Chennai - Velachery</text>
+</svg>

@@ -1,0 +1,102 @@
+package com.findmystay.controller;
+
+import com.findmystay.dao.EnquiryDAO;
+import com.findmystay.model.Booking;
+import com.findmystay.model.Enquiry;
+import com.findmystay.model.Property;
+import com.findmystay.model.User;
+import com.findmystay.service.BookingService;
+import com.findmystay.service.PropertyService;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * Controller for the Property Owner Dashboard and operations.
+ */
+@WebServlet(name = "OwnerDashboardServlet", urlPatterns = {
+    "/owner/dashboard",
+    "/owner/properties",
+    "/owner/bookings",
+    "/owner/enquiries",
+    "/owner/booking/status",
+    "/owner/availability"
+})
+public class OwnerDashboardServlet extends HttpServlet {
+
+    private final PropertyService propertyService = new PropertyService();
+    private final BookingService bookingService = new BookingService();
+    private final EnquiryDAO enquiryDAO = new EnquiryDAO();
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        User currentOwner = (User) session.getAttribute("currentUser");
+
+        List<Property> properties = propertyService.getPropertiesByOwner(currentOwner.getId());
+        List<Booking> bookings = bookingService.getOwnerBookings(currentOwner.getId());
+        List<Enquiry> enquiries = enquiryDAO.findByOwnerId(currentOwner.getId());
+
+        int pendingCount = 0;
+        int approvedCount = 0;
+        for (Booking b : bookings) {
+            if (b.getStatus() == Booking.BookingStatus.PENDING) pendingCount++;
+            else if (b.getStatus() == Booking.BookingStatus.APPROVED) approvedCount++;
+        }
+
+        req.setAttribute("properties", properties);
+        req.setAttribute("bookings", bookings);
+        req.setAttribute("enquiries", enquiries);
+        req.setAttribute("totalProperties", properties.size());
+        req.setAttribute("totalBookings", bookings.size());
+        req.setAttribute("pendingBookings", pendingCount);
+        req.setAttribute("approvedBookings", approvedCount);
+
+        req.getRequestDispatcher("/WEB-INF/views/owner/dashboard.jsp").forward(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        User currentOwner = (User) session.getAttribute("currentUser");
+        String uri = req.getRequestURI();
+
+        if (uri.endsWith("/status")) {
+            // Update booking status (APPROVE / REJECT)
+            String bookingIdStr = req.getParameter("bookingId");
+            String statusStr = req.getParameter("status");
+
+            if (bookingIdStr != null && statusStr != null) {
+                try {
+                    int bookingId = Integer.parseInt(bookingIdStr);
+                    Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusStr.toUpperCase());
+                    bookingService.updateStatus(bookingId, status, currentOwner.getId(), false);
+                } catch (Exception ignored) {}
+            }
+            resp.sendRedirect(req.getContextPath() + "/owner/dashboard?tab=bookings&success=Booking status updated");
+
+        } else if (uri.endsWith("/availability")) {
+            // Update live room availability
+            String propertyIdStr = req.getParameter("propertyId");
+            String countStr = req.getParameter("availableRooms");
+
+            if (propertyIdStr != null && countStr != null) {
+                try {
+                    int propertyId = Integer.parseInt(propertyIdStr);
+                    int count = Integer.parseInt(countStr);
+                    propertyService.updateLiveAvailability(propertyId, count);
+                } catch (Exception ignored) {}
+            }
+            resp.sendRedirect(req.getContextPath() + "/owner/dashboard?success=Room availability updated successfully");
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/owner/dashboard");
+        }
+    }
+}
+

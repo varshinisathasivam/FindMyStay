@@ -1,0 +1,84 @@
+/* ====================================================================
+   Property Comparison Table Styles
+   ==================================================================== */
+
+.compare-container {
+    padding: 40px 0 80px;
+}
+
+.compare-table {
+    width: 100%;
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    border-collapse: collapse;
+}
+
+.compare-table th, .compare-table td {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+}
+
+.compare-table th:first-child, .compare-table td:first-child {
+    background: var(--bg-cream);
+    width: 220px;
+    font-weight: 700;
+    color: var(--color-olive);
+}
+
+.compare-header-cell {
+    text-align: center;
+    position: relative;
+    padding: 24px 20px;
+}
+
+.compare-prop-img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+}
+
+.compare-remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #FFEBEE;
+    color: #C62828;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.feature-check {
+    color: #2E7D32;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.feature-cross {
+    color: #C62828;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.empty-compare-slot {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--color-charcoal-muted);
+    background: #FAF8F5;
+}
+
