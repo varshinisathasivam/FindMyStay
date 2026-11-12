@@ -62,7 +62,7 @@ public class CompareServlet extends HttpServlet {
             } catch (NumberFormatException ignored) {}
         }
 
-        if (redirect != null && !redirect.trim().isEmpty()) {
+        if (redirect != null && LoginServlet.isSafeInternalRedirect(req, redirect, null)) {
             resp.sendRedirect(redirect);
         } else {
             resp.sendRedirect(req.getContextPath() + "/compare");

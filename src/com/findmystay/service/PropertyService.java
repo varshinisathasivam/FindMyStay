@@ -74,6 +74,10 @@ public class PropertyService {
         return propertyDAO.updateLiveAvailability(propertyId, count);
     }
 
+    public boolean updateLiveAvailability(int propertyId, int count, int ownerId) {
+        return propertyDAO.updateLiveAvailability(propertyId, count, ownerId);
+    }
+
     public List<String> getPopularCities() {
         return propertyDAO.getPopularCities();
     }

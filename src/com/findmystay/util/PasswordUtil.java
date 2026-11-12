@@ -1,7 +1,8 @@
 package com.findmystay.util;
 
 /**
- * Utility for password hashing and verification using BCrypt.
+ * Utility for password hashing and verification using BCrypt only.
+ * Disallows plain-text fallback for security.
  */
 public class PasswordUtil {
 
@@ -20,17 +21,23 @@ public class PasswordUtil {
     }
 
     /**
-     * Verifies a candidate plain text password against a stored BCrypt hash.
+     * Verifies a candidate plain text password strictly using BCrypt.
+     * Plain-text fallback is strictly prohibited.
      *
      * @param plainPassword Candidate plain text
      * @param hashedPassword Stored BCrypt hash
-     * @return true if password matches, false otherwise
+     * @return true if password matches BCrypt hash, false otherwise
      */
     public static boolean verifyPassword(String plainPassword, String hashedPassword) {
         if (plainPassword == null || hashedPassword == null) {
             return false;
         }
-        return BCrypt.checkpw(plainPassword, hashedPassword);
+
+        // Strictly BCrypt verification only
+        try {
+            return BCrypt.checkpw(plainPassword, hashedPassword);
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 }
-

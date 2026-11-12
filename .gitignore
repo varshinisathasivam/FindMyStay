@@ -1,5 +1,20 @@
+# Build and temporary directories
 build/
-tomcat.8080/
+tomcat.*/
+work/
+temp/
 *.war
+*.class
 *.log
-FindMyStay.zip
+*.tmp
+*.bak
+*.zip
+src/webapp/WEB-INF/classes/
+
+# Local sensitive database credentials (use db.properties.example as template)
+src/db.properties
+db.properties
+
+# OS files
+.DS_Store
+Thumbs.db

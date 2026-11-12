@@ -142,13 +142,102 @@ public class BookingDAO {
     }
 
     public boolean updateStatus(int bookingId, Booking.BookingStatus status) {
-        String sql = "UPDATE bookings SET status = ? WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        return updateStatusWithTransaction(bookingId, status, 0, true);
+    }
 
-            ps.setString(1, status.name());
-            ps.setInt(2, bookingId);
-            return ps.executeUpdate() > 0;
+    /**
+     * Atomically updates booking status with row-level locking (FOR UPDATE) and proper
+     * room availability decrements/restorations within a single ACID transaction.
+     * Prevents duplicate approvals, race conditions, and double decrements.
+     */
+    public boolean updateStatusWithTransaction(int bookingId, Booking.BookingStatus targetStatus, int ownerOrAdminId, boolean isAdmin) {
+        String selectSql = "SELECT b.id, b.status, b.property_id, p.owner_id, p.available_rooms, p.total_rooms " +
+                           "FROM bookings b JOIN properties p ON b.property_id = p.id " +
+                           "WHERE b.id = ? FOR UPDATE";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement psSelect = conn.prepareStatement(selectSql)) {
+                psSelect.setInt(1, bookingId);
+                try (ResultSet rs = psSelect.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        return false;
+                    }
+
+                    Booking.BookingStatus currentStatus = Booking.BookingStatus.valueOf(rs.getString("status"));
+                    int propertyId = rs.getInt("property_id");
+                    int propertyOwnerId = rs.getInt("owner_id");
+                    int availableRooms = rs.getInt("available_rooms");
+
+                    // Check ownership authorization if not admin
+                    if (!isAdmin && propertyOwnerId != ownerOrAdminId) {
+                        conn.rollback();
+                        return false;
+                    }
+
+                    // Prevent duplicate approvals or idempotent no-op updates
+                    if (currentStatus == targetStatus) {
+                        conn.rollback();
+                        return false;
+                    }
+
+                    // Transition validation:
+                    if (targetStatus == Booking.BookingStatus.APPROVED) {
+                        if (currentStatus != Booking.BookingStatus.PENDING) {
+                            conn.rollback();
+                            return false;
+                        }
+                        if (availableRooms <= 0) {
+                            conn.rollback();
+                            return false; // No rooms left!
+                        }
+
+                        // Decrement room availability atomically
+                        String decrSql = "UPDATE properties SET available_rooms = available_rooms - 1 WHERE id = ? AND available_rooms > 0";
+                        try (PreparedStatement psDecr = conn.prepareStatement(decrSql)) {
+                            psDecr.setInt(1, propertyId);
+                            int decrRows = psDecr.executeUpdate();
+                            if (decrRows <= 0) {
+                                conn.rollback();
+                                return false;
+                            }
+                        }
+                    } else if ((targetStatus == Booking.BookingStatus.CANCELLED || targetStatus == Booking.BookingStatus.REJECTED)
+                               && currentStatus == Booking.BookingStatus.APPROVED) {
+                        // Restore previously decremented room availability
+                        String incrSql = "UPDATE properties SET available_rooms = LEAST(total_rooms, available_rooms + 1) WHERE id = ?";
+                        try (PreparedStatement psIncr = conn.prepareStatement(incrSql)) {
+                            psIncr.setInt(1, propertyId);
+                            psIncr.executeUpdate();
+                        }
+                    } else if (currentStatus != Booking.BookingStatus.PENDING) {
+                        // If current status is already CANCELLED or REJECTED, cannot change
+                        conn.rollback();
+                        return false;
+                    }
+
+                    // Update the booking status
+                    String updateSql = "UPDATE bookings SET status = ? WHERE id = ?";
+                    try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+                        psUpdate.setString(1, targetStatus.name());
+                        psUpdate.setInt(2, bookingId);
+                        int affected = psUpdate.executeUpdate();
+                        if (affected > 0) {
+                            conn.commit();
+                            return true;
+                        } else {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

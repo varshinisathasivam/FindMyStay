@@ -2,11 +2,17 @@ package com.findmystay.server;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.LifecycleState;
+import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.webresources.DirResourceSet;
 import org.apache.catalina.webresources.StandardRoot;
 
+import java.awt.Desktop;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
+import java.net.ServerSocket;
+import java.net.URI;
 
 /**
  * EmbeddedServer – launches FindMyStay inside an embedded Tomcat 10 instance.
@@ -26,6 +32,15 @@ public class EmbeddedServer {
         System.out.println("  FindMyStay – Embedded Server Starting...  ");
         System.out.println("==============================================");
 
+        // Pre-check port availability before attempting to bind
+        if (!isPortAvailable(PORT)) {
+            System.err.println("==============================================================");
+            System.err.println("  [ERROR] Port " + PORT + " is already in use by another process!");
+            System.err.println("  Please stop any running server or release port " + PORT + ".");
+            System.err.println("==============================================================");
+            System.exit(1);
+        }
+
         // Resolve the webapp directory (works from project root)
         String webappDir = resolveWebappDir();
         System.out.println("  Webapp dir  : " + webappDir);
@@ -36,13 +51,17 @@ public class EmbeddedServer {
         Tomcat tomcat = new Tomcat();
         tomcat.setPort(PORT);
 
-        // Required to trigger connector creation
-        tomcat.getConnector();
-
         // Set a writable base directory for Tomcat temp files
         File baseDir = new File(System.getProperty("java.io.tmpdir"), "findmystay-tomcat");
         baseDir.mkdirs();
         tomcat.setBaseDir(baseDir.getAbsolutePath());
+
+        // Initialize connector
+        Connector connector = tomcat.getConnector();
+        if (connector == null) {
+            System.err.println("[ERROR] Failed to create Tomcat connector for port " + PORT);
+            System.exit(1);
+        }
 
         // Add webapp context at root "/"
         Context ctx = tomcat.addWebapp("", new File(webappDir).getAbsolutePath());
@@ -62,7 +81,32 @@ public class EmbeddedServer {
         ctx.setResources(resources);
 
         // Start Tomcat
-        tomcat.start();
+        try {
+            tomcat.start();
+        } catch (LifecycleException le) {
+            System.err.println("==============================================================");
+            System.err.println("  [ERROR] Failed to start Tomcat server: " + le.getMessage());
+            System.err.println("==============================================================");
+            try {
+                tomcat.stop();
+                tomcat.destroy();
+            } catch (Exception ignored) {}
+            System.exit(1);
+        }
+
+        // Verify connector initialization succeeded before reporting server started
+        if (connector.getState() == LifecycleState.FAILED || !connector.getState().isAvailable()) {
+            System.err.println("==============================================================");
+            System.err.println("  [ERROR] Tomcat connector initialization failed on port " + PORT + "!");
+            System.err.println("  Connector state: " + connector.getState());
+            System.err.println("==============================================================");
+            try {
+                tomcat.stop();
+                tomcat.destroy();
+            } catch (Exception ignored) {}
+            System.exit(1);
+        }
+
         System.out.println("==============================================");
         System.out.println("  Server started! Open your browser:        ");
         System.out.println("  http://localhost:" + PORT + "/             ");
@@ -79,15 +123,28 @@ public class EmbeddedServer {
         System.out.println("  Press Ctrl+C to stop.                      ");
         System.out.println("==============================================");
 
-        // Automatically launch the default browser
+        // Automatically launch the default browser safely (headless & non-desktop safe)
         try {
-            if (java.awt.Desktop.isDesktopSupported() && java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.BROWSE)) {
-                java.awt.Desktop.getDesktop().browse(new java.net.URI("http://localhost:" + PORT + "/"));
+            if (!GraphicsEnvironment.isHeadless()
+                    && Desktop.isDesktopSupported()
+                    && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(new URI("http://localhost:" + PORT + "/"));
             }
-        } catch (Exception ignored) {}
+        } catch (Throwable t) {
+            // Safely ignored in headless / non-desktop environments
+        }
 
         // Keep the server running
         tomcat.getServer().await();
+    }
+
+    private static boolean isPortAvailable(int port) {
+        try (ServerSocket ss = new ServerSocket(port)) {
+            ss.setReuseAddress(true);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private static String resolveWebappDir() {
@@ -108,4 +165,3 @@ public class EmbeddedServer {
         return "src/webapp";
     }
 }
-

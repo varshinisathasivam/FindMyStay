@@ -36,15 +36,44 @@ public class UserService {
         return null;
     }
 
-    public boolean register(String fullName, String email, String phone, String plainPassword, User.Role role) {
-        if (!ValidationUtil.isNotEmpty(fullName) ||
-            !ValidationUtil.isValidEmail(email) ||
-            !ValidationUtil.isValidPassword(plainPassword)) {
-            return false;
+    public static class RegistrationResponse {
+        private final boolean success;
+        private final String message;
+
+        public RegistrationResponse(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
+
+    public RegistrationResponse registerUser(String fullName, String email, String phone, String plainPassword, User.Role role) {
+        if (!ValidationUtil.isNotEmpty(fullName) || !ValidationUtil.isValidLength(fullName, 3, 100)) {
+            return new RegistrationResponse(false, "Please provide a valid full name (at least 3 characters).");
+        }
+        if (!ValidationUtil.isValidEmail(email)) {
+            return new RegistrationResponse(false, "Please provide a valid email address.");
+        }
+        if (!ValidationUtil.isValidPhone(phone)) {
+            return new RegistrationResponse(false, "Please provide a valid 10-digit Indian phone number starting with 6-9.");
+        }
+        if (!ValidationUtil.isValidPassword(plainPassword)) {
+            return new RegistrationResponse(false, "Password must be at least 6 characters long.");
+        }
+
+        if (!com.findmystay.util.DatabaseConnection.testConnection()) {
+            return new RegistrationResponse(false, "Database connection error! Please verify MySQL is running and credentials in src/db.properties are correct.");
         }
 
         if (userDAO.emailExists(email)) {
-            return false;
+            return new RegistrationResponse(false, "An account with this email address already exists. Please login instead.");
         }
 
         // Prevent public self-registration as ADMIN
@@ -54,7 +83,16 @@ public class UserService {
 
         String hashed = PasswordUtil.hashPassword(plainPassword);
         User user = new User(fullName.trim(), email.trim().toLowerCase(), phone != null ? phone.trim() : "", hashed, role);
-        return userDAO.createUser(user);
+        boolean created = userDAO.createUser(user);
+        if (created) {
+            return new RegistrationResponse(true, "Account created successfully! Please login.");
+        } else {
+            return new RegistrationResponse(false, "Unable to save user details to database. Please check MySQL server logs.");
+        }
+    }
+
+    public boolean register(String fullName, String email, String phone, String plainPassword, User.Role role) {
+        return registerUser(fullName, email, phone, plainPassword, role).isSuccess();
     }
 
     public boolean updateProfile(int userId, String fullName, String phone) {

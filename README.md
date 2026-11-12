@@ -2,7 +2,7 @@
 
 **FindMyStay** is a full-stack, enterprise-grade Java web application designed to help students, working professionals, and urban migrants discover, compare, save, and request bookings for verified PG accommodations, hostels, and rental rooms across major Indian cities (Chennai, Coimbatore, Salem, Bangalore, and Hyderabad).
 
-Built strictly using **Core Java 17, Java Servlets (Jakarta EE), JSP, JDBC, and MySQL**, following clean **MVC architecture and OOP principles**, with zero dependency on frameworks like Spring Boot, Hibernate, JPA, or Maven.
+Built strictly using **Core Java 21 (LTS), Java Servlets (Jakarta EE 10), JSP, JDBC, and MySQL**, following clean **MVC architecture and OOP principles**, with zero dependency on frameworks like Spring Boot, Hibernate, JPA, or Maven.
 
 ---
 
@@ -37,15 +37,15 @@ In modern urban cities, finding suitable long-term or shared accommodation often
 
 | Layer | Technology | Details |
 |---|---|---|
-| **Language** | Java 17 (LTS) | OOP Principles, Strong Encapsulation, Polymorphism |
+| **Language** | Java 21 (LTS) | JDK 21 compiler with `--release 21`, OOP Principles, Strong Encapsulation |
 | **Backend Framework** | Java Servlets | Jakarta Servlet Specification (Controller Layer) |
 | **View Engine** | JSP (JavaServer Pages) | Dynamic HTML, JSTL & Scriptlet rendering |
 | **Database** | MySQL 8.0+ | Relational schema (`findmystay_db`) |
 | **Data Access** | JDBC | `DriverManager`, `PreparedStatement`, `ResultSet`, DAO Pattern |
-| **Security** | BCrypt & Sessions | Password hashing via Blowfish BCrypt, HTTP Session management |
+| **Security** | BCrypt & Sessions | Standard OpenBSD BCrypt via `org.mindrot:jbcrypt`, HTTP Session management |
 | **Styling & UI** | Custom CSS3 | Warm Cream, Sage Green, Deep Olive & Terracotta palette |
 | **Client Scripts** | Vanilla JavaScript | Dynamic rent calculation, live filters, modal dialogs |
-| **Servlet Container** | Tomcat 10+ / Jetty 11+ | Standalone Jakarta EE Servlet container |
+| **Servlet Container** | Tomcat 10+ / Embedded Tomcat | Standalone Jakarta EE Servlet container |
 
 > **Strict Constraints Followed**: No Spring Boot, No Hibernate, No JPA, No Node.js, No React, No Python, No Maven pom.xml, No Apache Tomcat 9.
 
@@ -178,8 +178,14 @@ FindMyStay/
 ├── database/
 │   └── database.sql                   # Schema and 15 seeded properties
 ├── lib/
+│   ├── ecj.jar                        # Eclipse Compiler for JSP compilation in Tomcat
+│   ├── jakarta.annotation-api.jar     # Common Annotations API
 │   ├── jakarta.servlet-api.jar        # Jakarta Servlet 6.0 / 5.0 API
-│   └── tomcat-embed-el.jar            # Expression Language library
+│   ├── jbcrypt-0.4.jar                # Standard OpenBSD BCrypt Password Hashing
+│   ├── mysql-connector-j.jar          # MySQL JDBC Driver 8.0+
+│   ├── tomcat-embed-core.jar          # Embedded Tomcat Core
+│   ├── tomcat-embed-el.jar            # Expression Language library
+│   └── tomcat-embed-jasper.jar        # Embedded Jasper JSP Engine
 ├── src/
 │   ├── com/findmystay/
 │   │   ├── controller/                # 18 Servlets (Home, Search, Booking, Owner, Admin...)
@@ -210,7 +216,7 @@ FindMyStay/
 ## 8. Setup & Installation Guide
 
 ### Prerequisites
-1. **Java Development Kit (JDK 17 or higher)**
+1. **Java Development Kit (JDK 21 or higher)**
    Verify using:
    ```cmd
    javac -version
@@ -219,7 +225,7 @@ FindMyStay/
 2. **MySQL Server 8.0 or higher**
    Ensure MySQL service is running on port `3306`.
 3. **Servlet Container**
-   Apache Tomcat 10.x / 11.x, Eclipse Jetty 11+, or GlassFish 6+.
+   Embedded Tomcat 10 (bundled, runs directly via `run.bat`) or external Apache Tomcat 10.x / 11.x.
 
 ### Database Initialization
 1. Open MySQL Workbench or MySQL Command Line Client:
@@ -232,31 +238,41 @@ FindMyStay/
    ```
    *This creates `findmystay_db`, all 12 tables, and seeds 15 properties across Chennai, Coimbatore, Salem, Bangalore, and Hyderabad.*
 
-### JDBC Configuration
-Database connection parameters are maintained in `src/com/findmystay/util/DatabaseConnection.java`:
-- URL: `jdbc:mysql://localhost:3306/findmystay_db`
-- Default User: `root`
-- Default Password: `#Varshini123`
-
-You can also override these at runtime via environment variables:
-`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`.
+### Database Configuration
+Database connection parameters are configured securely via `src/db.properties` or environment variables (no hardcoded passwords in Java source):
+1. Copy `db.properties.example` to `src/db.properties`:
+   ```properties
+   db.url=jdbc:mysql://localhost:3306/findmystay_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+   db.user=root
+   db.password=YOUR_MYSQL_PASSWORD
+   ```
+2. Or supply environment variables:
+   `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (or `DB_URL`).
 
 ---
 
-## 9. How to Compile, Package & Deploy
+## 9. How to Compile, Package & Run
 
-### Step 1: Compile & Package
-Double-click `compile.bat` or run:
+### Step 1: Compile & Package (Java 21 Compatible)
+Run:
 ```cmd
 compile.bat
 ```
-This compiles all Java source files against `lib/jakarta.servlet-api.jar` and packages the deployable artifact:
+This compiles all Java source files using `--release 21` to ensure strict Java 21 bytecode compatibility, stages the classes, and packages:
 `build/dist/FindMyStay.war`.
 
-### Step 2: Deploy to Servlet Container
+### Step 2: Run Using Embedded Server (Recommended)
+Simply run:
+```cmd
+run.bat
+```
+`run.bat` automatically rebuilds the latest source files and boots the Embedded Tomcat 10 container on port 8080.
+Open your browser at:
+**`http://localhost:8080/`**
+
+### Step 3: Deploy to External Servlet Container (Optional)
 - **Apache Tomcat 10+ / 11+**:
-  Copy `build/dist/FindMyStay.war` into your Tomcat `webapps/` folder.
-  Start Tomcat (`bin/startup.bat`).
+  Copy `build/dist/FindMyStay.war` into your Tomcat `webapps/` folder and start Tomcat (`bin/startup.bat`).
   Access at: `http://localhost:8080/FindMyStay/`
 
 - **Eclipse Jetty 11+ / 12+**:

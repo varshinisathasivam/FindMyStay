@@ -30,6 +30,7 @@
             <div style="background:var(--color-white);padding:30px;border-radius:var(--radius-md);border:1px solid var(--border-color);box-shadow:var(--card-shadow);">
                 <form action="<%= request.getContextPath() %>/book" method="post">
                     <input type="hidden" name="propertyId" value="<%= property.getId() %>">
+                    <input type="hidden" name="csrfToken" value="<%= com.findmystay.util.CsrfUtil.getToken(session) %>">
 
                     <div class="form-group" style="margin-bottom:16px;">
                         <label class="form-label">Selected Property</label>
@@ -59,7 +60,7 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
                         <div class="form-group">
                             <label class="form-label">Move-In Date</label>
-                            <input type="date" name="moveInDate" class="form-control" required min="2026-11-11">
+                            <input type="date" name="moveInDate" class="form-control" required min="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>">
                         </div>
 
                         <div class="form-group">

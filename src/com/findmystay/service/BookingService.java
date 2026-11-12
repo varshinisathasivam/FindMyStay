@@ -38,8 +38,35 @@ public class BookingService {
             return null;
         }
 
+        // Room availability check
+        if (property.getAvailableRooms() <= 0) {
+            return null;
+        }
+
+        // Validate booking dates: move-in date cannot be in the past
+        if (moveInDate == null) {
+            return null;
+        }
+        long now = System.currentTimeMillis() - (24 * 60 * 60 * 1000L); // 1-day tolerance for timezone
+        if (moveInDate.getTime() < now) {
+            return null;
+        }
+
         if (durationMonths <= 0) durationMonths = 1;
+        if (durationMonths > 36) durationMonths = 36;
+
+        // Calculate booking prices using the correct selected room type and applicable rate
         BigDecimal monthlyRate = property.getMonthlyRent();
+        if (roomType != null && property.getRoomTypes() != null) {
+            for (com.findmystay.model.RoomType rt : property.getRoomTypes()) {
+                if (rt.getName() != null && rt.getName().equalsIgnoreCase(roomType.trim())) {
+                    if (rt.getRent() != null && rt.getRent().compareTo(BigDecimal.ZERO) > 0) {
+                        monthlyRate = rt.getRent();
+                    }
+                    break;
+                }
+            }
+        }
         BigDecimal total = monthlyRate.multiply(new BigDecimal(durationMonths));
 
         String ref = generateBookingReference();
@@ -48,7 +75,7 @@ public class BookingService {
         booking.setBookingRef(ref);
         booking.setCustomerId(customerId);
         booking.setPropertyId(propertyId);
-        booking.setRoomType(roomType != null ? roomType : "Standard Room");
+        booking.setRoomType(roomType != null && !roomType.trim().isEmpty() ? roomType.trim() : "Standard Room");
         booking.setMoveInDate(moveInDate);
         booking.setDurationMonths(durationMonths);
         booking.setContactNumber(contactNumber);
@@ -73,23 +100,7 @@ public class BookingService {
     }
 
     public boolean updateStatus(int bookingId, Booking.BookingStatus status, int ownerOrAdminId, boolean isAdmin) {
-        Booking booking = bookingDAO.findById(bookingId);
-        if (booking == null) return false;
-
-        // Verify owner permissions if not admin
-        if (!isAdmin && booking.getOwnerId() != ownerOrAdminId) {
-            return false;
-        }
-
-        boolean updated = bookingDAO.updateStatus(bookingId, status);
-        if (updated && status == Booking.BookingStatus.APPROVED) {
-            // Decrement available room count if approved
-            Property prop = propertyDAO.findById(booking.getPropertyId());
-            if (prop != null && prop.getAvailableRooms() > 0) {
-                propertyDAO.updateLiveAvailability(prop.getId(), prop.getAvailableRooms() - 1);
-            }
-        }
-        return updated;
+        return bookingDAO.updateStatusWithTransaction(bookingId, status, ownerOrAdminId, isAdmin);
     }
 
     public boolean cancelBooking(int bookingId, int customerId) {

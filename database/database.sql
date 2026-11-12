@@ -231,17 +231,15 @@ INSERT INTO amenities (id, name, icon_class) VALUES
 (12, 'Spacious Balcony', 'fas fa-cloud-sun');
 
 -- 2. Insert Demo Users (BCrypt hashes for Customer@123, Owner@123, Admin@123)
--- Customer@123 -> $2a$10$oX1oF7qFq5bXkYwQf4h92eXW2B5kYqM/Xw4qP1jG6y5w9.eY9v5Q2 (or our BCrypt generator)
--- We will store pre-computed valid BCrypt hashes:
 -- Customer: customer@findmystay.com / Customer@123
 -- Owner: owner@findmystay.com / Owner@123
 -- Admin: admin@findmystay.com / Admin@123
 INSERT INTO users (id, full_name, email, phone, password_hash, role) VALUES
-(1, 'Karthik Raja', 'customer@findmystay.com', '9876543210', '$2a$10$83r42yObDCxSlrcpnO8xveR1HuYEDsdU3hXSHjYE7qXETwS0LwcUHj', 'CUSTOMER'),
-(2, 'Senthil Murugan', 'owner@findmystay.com', '9840123456', '$2a$10$DS648u74NA2ZCmOQLNarR.R1HuYEDsXU3hXSHjYE7qXETwS0LwcUHj', 'OWNER'),
-(3, 'FindMyStay Admin', 'admin@findmystay.com', '9999999999', '$2a$10$KZkFrrL2vpn1Sg6.mxFdreR1HuYEDsXU3hXSHjYE7qXETwS0LwcUHj', 'ADMIN'),
-(4, 'Priya Soundar', 'priya@gmail.com', '9845112233', '$2a$10$83r42yObDCxSlrcpnO8xveR1HuYEDsdU3hXSHjYE7qXETwS0LwcUHj', 'CUSTOMER'),
-(5, 'Rajesh Kannan', 'rajesh.owner@gmail.com', '9789012345', '$2a$10$DS648u74NA2ZCmOQLNarR.R1HuYEDsXU3hXSHjYE7qXETwS0LwcUHj', 'OWNER');
+(1, 'Karthik Raja', 'customer@findmystay.com', '9876543210', '$2a$10$IfbhTeEkE.MZ93J4St8FUuet0kjfNIAUP9bH46/RExJLKbM02T4P.', 'CUSTOMER'),
+(2, 'Senthil Murugan', 'owner@findmystay.com', '9840123456', '$2a$10$5Qs6yRceJU8O/BNH8ItrLewe/.qkRCuXSmKasfIcaoVc0S1zDoDmS', 'OWNER'),
+(3, 'FindMyStay Admin', 'admin@findmystay.com', '9999999999', '$2a$10$9Mn/6Nm3XKgY6jAOZShOSe3upZU7LBxzUvlY3Kt90GH2JuAUM6KAO', 'ADMIN'),
+(4, 'Priya Soundar', 'priya@gmail.com', '9845112233', '$2a$10$IfbhTeEkE.MZ93J4St8FUuet0kjfNIAUP9bH46/RExJLKbM02T4P.', 'CUSTOMER'),
+(5, 'Rajesh Kannan', 'rajesh.owner@gmail.com', '9789012345', '$2a$10$5Qs6yRceJU8O/BNH8ItrLewe/.qkRCuXSmKasfIcaoVc0S1zDoDmS', 'OWNER');
 
 -- 3. Insert 15 Properties across Chennai, Coimbatore, Salem, Bangalore, Hyderabad
 INSERT INTO properties (id, owner_id, title, description, property_type, gender_preference, address, city, monthly_rent, security_deposit, room_sharing, food_availability, house_rules, safety_info, nearby_places, is_verified, is_active, total_rooms, available_rooms, rating, featured_image) VALUES

@@ -382,6 +382,21 @@ public class PropertyDAO {
         return false;
     }
 
+    public boolean updateLiveAvailability(int propertyId, int availableRooms, int ownerId) {
+        String sql = "UPDATE properties SET available_rooms = ? WHERE id = ? AND owner_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, Math.max(0, availableRooms));
+            ps.setInt(2, propertyId);
+            ps.setInt(3, ownerId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public int countTotal() {
         String sql = "SELECT COUNT(*) FROM properties";
         try (Connection conn = DatabaseConnection.getConnection();

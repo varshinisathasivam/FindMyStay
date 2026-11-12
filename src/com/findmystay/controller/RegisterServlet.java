@@ -74,12 +74,12 @@ public class RegisterServlet extends HttpServlet {
             role = User.Role.OWNER;
         }
 
-        boolean created = userService.register(fullName, email, phone, password, role);
+        UserService.RegistrationResponse regResult = userService.registerUser(fullName, email, phone, password, role);
 
-        if (created) {
-            resp.sendRedirect(req.getContextPath() + "/login?success=Account created successfully! Please login.");
+        if (regResult.isSuccess()) {
+            resp.sendRedirect(req.getContextPath() + "/login?success=" + java.net.URLEncoder.encode(regResult.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
         } else {
-            req.setAttribute("errorMessage", "An account with this email address already exists. Please login instead.");
+            req.setAttribute("errorMessage", regResult.getMessage());
             preserveFormFields(req, fullName, email, phone, roleStr);
             req.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(req, resp);
         }

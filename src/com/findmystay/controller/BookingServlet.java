@@ -91,15 +91,35 @@ public class BookingServlet extends HttpServlet {
         String phone = req.getParameter("contactNumber");
         String message = req.getParameter("message");
 
+        // CSRF Token validation if provided
+        String csrfToken = req.getParameter(com.findmystay.util.CsrfUtil.CSRF_PARAM_NAME);
+        if (csrfToken != null && !com.findmystay.util.CsrfUtil.isValid(req)) {
+            resp.sendRedirect(req.getContextPath() + "/book?propertyId=" + propIdStr + "&error=Security token expired. Please try again.");
+            return;
+        }
+
         if (propIdStr == null || moveInDateStr == null || !ValidationUtil.isValidPhone(phone)) {
             resp.sendRedirect(req.getContextPath() + "/book?propertyId=" + propIdStr + "&error=Invalid contact phone or missing fields");
             return;
         }
 
         try {
-            int propId = Integer.parseInt(propIdStr);
+            int propId = Integer.parseInt(propIdStr.trim());
             Date moveInDate = Date.valueOf(moveInDateStr.trim());
             int duration = Integer.parseInt(durationStr != null ? durationStr.trim() : "1");
+
+            // Validate move-in date is not in the past
+            long todayStart = System.currentTimeMillis() - (24 * 60 * 60 * 1000L);
+            if (moveInDate.getTime() < todayStart) {
+                resp.sendRedirect(req.getContextPath() + "/book?propertyId=" + propIdStr + "&error=Move-in date cannot be in the past.");
+                return;
+            }
+
+            Property property = propertyService.getPropertyDetails(propId);
+            if (property == null || !property.isActive() || property.getAvailableRooms() <= 0) {
+                resp.sendRedirect(req.getContextPath() + "/book?propertyId=" + propIdStr + "&error=No rooms are currently available for this property.");
+                return;
+            }
 
             Booking booking = bookingService.createBooking(
                 currentUser.getId(), propId, roomType, moveInDate, duration, phone, message
@@ -108,7 +128,7 @@ public class BookingServlet extends HttpServlet {
             if (booking != null) {
                 resp.sendRedirect(req.getContextPath() + "/customer/dashboard?tab=bookings&success=Booking request submitted! Reference: " + booking.getBookingRef());
             } else {
-                resp.sendRedirect(req.getContextPath() + "/book?propertyId=" + propIdStr + "&error=Failed to submit booking request");
+                resp.sendRedirect(req.getContextPath() + "/book?propertyId=" + propIdStr + "&error=Failed to submit booking request. Please check room availability.");
             }
         } catch (Exception e) {
             resp.sendRedirect(req.getContextPath() + "/stays?error=Invalid booking parameters");

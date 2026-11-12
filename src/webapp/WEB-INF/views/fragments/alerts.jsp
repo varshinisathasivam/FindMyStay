@@ -9,13 +9,13 @@
 <% if (successMsg != null && !successMsg.trim().isEmpty()) { %>
     <div class="alert alert-success">
         <i class="fas fa-check-circle"></i>
-        <span><%= successMsg %></span>
+        <span><%= com.findmystay.util.HtmlUtil.escape(successMsg) %></span>
     </div>
 <% } %>
 <% if (errorMsg != null && !errorMsg.trim().isEmpty()) { %>
     <div class="alert alert-danger">
         <i class="fas fa-exclamation-circle"></i>
-        <span><%= errorMsg %></span>
+        <span><%= com.findmystay.util.HtmlUtil.escape(errorMsg) %></span>
     </div>
 <% } %>
 

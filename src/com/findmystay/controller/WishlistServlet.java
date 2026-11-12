@@ -67,7 +67,7 @@ public class WishlistServlet extends HttpServlet {
             } catch (NumberFormatException ignored) {}
         }
 
-        if (redirect != null && !redirect.trim().isEmpty()) {
+        if (redirect != null && LoginServlet.isSafeInternalRedirect(req, redirect, currentUser)) {
             resp.sendRedirect(redirect);
         } else {
             resp.sendRedirect(req.getContextPath() + "/wishlist");

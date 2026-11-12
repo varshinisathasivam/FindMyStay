@@ -110,10 +110,17 @@ public class AdminServlet extends HttpServlet {
             String statusStr = req.getParameter("status");
             if (bIdStr != null && statusStr != null) {
                 try {
-                    bookingService.updateStatus(Integer.parseInt(bIdStr), Booking.BookingStatus.valueOf(statusStr), currentUser.getId(), true);
+                    boolean updated = bookingService.updateStatus(Integer.parseInt(bIdStr), Booking.BookingStatus.valueOf(statusStr), currentUser.getId(), true);
+                    if (updated) {
+                        resp.sendRedirect(req.getContextPath() + "/admin/dashboard?tab=bookings&success=Booking status updated successfully");
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/admin/dashboard?tab=bookings&error=Unable to update booking status");
+                    }
+                    return;
                 } catch (Exception ignored) {}
             }
-            resp.sendRedirect(req.getContextPath() + "/admin/dashboard?tab=bookings&success=Booking updated");
+            resp.sendRedirect(req.getContextPath() + "/admin/dashboard?tab=bookings&error=Invalid booking request");
+            return;
 
         } else if (uri.endsWith("/user/delete")) {
             String uIdStr = req.getParameter("userId");

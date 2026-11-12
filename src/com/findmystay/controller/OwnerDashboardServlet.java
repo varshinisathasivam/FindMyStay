@@ -68,7 +68,7 @@ public class OwnerDashboardServlet extends HttpServlet {
         String uri = req.getRequestURI();
 
         if (uri.endsWith("/status")) {
-            // Update booking status (APPROVE / REJECT)
+            // Update booking status (APPROVE / REJECT) with transaction
             String bookingIdStr = req.getParameter("bookingId");
             String statusStr = req.getParameter("status");
 
@@ -76,24 +76,56 @@ public class OwnerDashboardServlet extends HttpServlet {
                 try {
                     int bookingId = Integer.parseInt(bookingIdStr);
                     Booking.BookingStatus status = Booking.BookingStatus.valueOf(statusStr.toUpperCase());
-                    bookingService.updateStatus(bookingId, status, currentOwner.getId(), false);
+                    boolean updated = bookingService.updateStatus(bookingId, status, currentOwner.getId(), false);
+                    if (updated) {
+                        resp.sendRedirect(req.getContextPath() + "/owner/dashboard?tab=bookings&success=Booking status updated successfully");
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/owner/dashboard?tab=bookings&error=Unable to update booking. Either rooms are full or status was already updated.");
+                    }
+                    return;
                 } catch (Exception ignored) {}
             }
-            resp.sendRedirect(req.getContextPath() + "/owner/dashboard?tab=bookings&success=Booking status updated");
+            resp.sendRedirect(req.getContextPath() + "/owner/dashboard?tab=bookings&error=Invalid booking request");
+            return;
 
         } else if (uri.endsWith("/availability")) {
-            // Update live room availability
+            // Update live room availability with backend authorization check
+            if (currentOwner == null) {
+                resp.sendRedirect(req.getContextPath() + "/login?error=Session expired. Please log in.");
+                return;
+            }
+
             String propertyIdStr = req.getParameter("propertyId");
             String countStr = req.getParameter("availableRooms");
 
             if (propertyIdStr != null && countStr != null) {
                 try {
-                    int propertyId = Integer.parseInt(propertyIdStr);
-                    int count = Integer.parseInt(countStr);
-                    propertyService.updateLiveAvailability(propertyId, count);
-                } catch (Exception ignored) {}
+                    int propertyId = Integer.parseInt(propertyIdStr.trim());
+                    int count = Integer.parseInt(countStr.trim());
+
+                    // Validate property ownership
+                    Property prop = propertyService.getPropertyDetails(propertyId);
+                    if (prop == null || (prop.getOwnerId() != currentOwner.getId() && !currentOwner.isAdmin())) {
+                        resp.sendRedirect(req.getContextPath() + "/owner/dashboard?error=Unauthorized: You can only update your own property.");
+                        return;
+                    }
+
+                    boolean updated = currentOwner.isAdmin()
+                            ? propertyService.updateLiveAvailability(propertyId, count)
+                            : propertyService.updateLiveAvailability(propertyId, count, currentOwner.getId());
+
+                    if (updated) {
+                        resp.sendRedirect(req.getContextPath() + "/owner/dashboard?success=Room availability updated successfully");
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/owner/dashboard?error=Failed to update room availability.");
+                    }
+                    return;
+                } catch (NumberFormatException e) {
+                    resp.sendRedirect(req.getContextPath() + "/owner/dashboard?error=Invalid property or room count format.");
+                    return;
+                }
             }
-            resp.sendRedirect(req.getContextPath() + "/owner/dashboard?success=Room availability updated successfully");
+            resp.sendRedirect(req.getContextPath() + "/owner/dashboard");
         } else {
             resp.sendRedirect(req.getContextPath() + "/owner/dashboard");
         }
